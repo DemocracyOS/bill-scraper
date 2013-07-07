@@ -1,80 +1,40 @@
 var http = require("http");
 var util = require("util");
 var fs = require('fs')
-
-//global variables
-var programName=undefined;
-var mode=undefined;
-var hostname=undefined;
-var pathname=undefined;
-var startIndex=undefined; 
-var endIndex=undefined; 
+var argv = require('optimist')
+    .usage(
+        'Usage1: $0 -h hostname [-p path] [-s start_index] [-e end_index]\n'+
+        '\n'+
+        '')
+    .default({ p : '', s : 0 })
+    .demand(['h'])
+    .describe('h', 'Hostname to connect to (ie.: www.google.com)')
+    .describe('p', 'Path in the host, include "#1" to replace for an index (ie.: /docs/law#1.html)')
+    .describe('s', 'Starting index for auto generated urls (ie.: 200)')
+    .describe('e', 'End index for auto generated urls (ie.: 210)')
+    .argv;
 
 main();
 
 function main(){
-  readParams();
-  processLinks(startIndex);
+  checkParams();
+  processLinks(argv.s);
 }
 
-function readParams(){
-  process.argv.forEach(function (val, index, array) {
-    if(index==1){
-      programName=val;
-    }
-    if(index==2){
-      mode=val;
-    }
-    if(mode=="-e"){
-      if(index==3){
-        hostname=val;
-      }
-      if(index==4){
-        pathname=val;
-      }
-      if(index==5){
-        startIndex=val;
-      }
-      if(index==6){
-        endIndex=val;
-      }
-    }
-  });
-  if(!mode || mode!="-e"){
-    console.log("Usage: node "+programName+" -h");
-    console.log("            shows this message");
-    console.log("");
-    console.log("       node "+programName+" -i hostname pathname startIndex endIndex");
-  }
-  if(mode=="-e"){
-      if(!hostname){
-        console.log("Please define Hostname");
-        process.exit(1);
-      }
-      if(!pathname){
-        console.log("Please define Pathname");
-        process.exit(1);
-      }
-      if(pathname.indexOf('#1')<0){
-        console.log("Please define a Pathname with '#1' inside it");
-        process.exit(1);
-      }
-      if(!startIndex){
-        console.log("Please define Start Index");
-        process.exit(1);
-      }
-  }
+function checkParams(){
+  //ToDo: when parameters logic is more complex, add here a validation logic to tell the user 
+  //what's wrong with them and to check consistency 
 }
 
 function processLinks(lastUsedIndex){
-  if(lastUsedIndex>endIndex){
+  if(lastUsedIndex>argv.e){
     return;
   }else{
-    var newPathname=pathname.replace("\#1", lastUsedIndex);
-    var thisLink=hostname+newPathname;
+    var newPathname=argv.p.replace("\#1", lastUsedIndex);
+    var thisLink=argv.h+newPathname;
     console.log("processing: "+thisLink);
     lastUsedIndex++;
-    traerPag(hostname, newPathname, lastUsedIndex);
+    traerPag(argv.h, newPathname, lastUsedIndex);
   }
 }
 
