@@ -3,27 +3,35 @@ var util = require("util");
 var fs = require('fs')
 var argv = require('optimist')
     .usage(
-        'Usage1: $0 -h hostname [-p path] [-s start_index] [-e end_index]\n'+
+        'Usage1: $0 -t json_structure -h hostname [-p path] [-s start_index] [-e end_index]\n'+
         '\n'+
         '')
     .default({ p : '', s : 0 })
+    .demand(['t'])
     .demand(['h'])
+    .describe('t', 'Json file with the structure to parse (ie.: ./config.json)')
     .describe('h', 'Hostname to connect to (ie.: www.google.com)')
     .describe('p', 'Path in the host, include "#1" to replace for an index (ie.: /docs/law#1.html)')
     .describe('s', 'Starting index for auto generated urls (ie.: 200)')
     .describe('e', 'End index for auto generated urls (ie.: 210)')
     .argv;
+var structure = undefined;
 
 main();
 
 function main(){
   checkParams();
+  readStructure();
   processLinks(argv.s);
 }
 
 function checkParams(){
   //ToDo: when parameters logic is more complex, add here a validation logic to tell the user 
   //what's wrong with them and to check consistency 
+}
+
+function readStructure(){
+  structure = require(argv.t);
 }
 
 function processLinks(lastUsedIndex){
@@ -65,24 +73,26 @@ function traerPag(host, path, lastUsedIndex){
 }
 
 function getJsonFromString(cadena){
-  var sancion=getScrapped(cadena, /.*Sanci&oacute;n: (\d{1,2}\/\d{1,2}\/\d{4})(.*)/);
-  console.log("Sancion: "+sancion);
-  var publicacion=getScrapped(cadena, /.*Publicaci&oacute;n: (.*)<(.*)/);
-  console.log("Publicacion: "+publicacion);
-  var promulgacion=getScrapped(cadena, /.*Promulgaci&oacute;n: (.*)<(.*)/);
-  console.log("Promulgacion: "+promulgacion);
-  
-  var arts = cadena.match(/.*Art&iacute;culo \d{1,2}(.*)-(.*)/g);
-  for(aa in arts){
-    var articuloAca = getScrapped(arts[aa], /.*Art&iacute;culo(.*)-(.*)/, 2);
-    console.log("Art "+aa+": "+articuloAca);
+  for(token in structure.structure){
+    if(structure.structure[token].array=="true"){
+      var regexp1 = new RegExp(structure.structure[token].regex, "g");
+      var  paragraph = cadena.match(regexp1);
+      var regexp2 = new RegExp(structure.structure[token].internal_regex);
+      for(parag in paragraph){
+        var thisPart= getScrapped(paragraph[parag], regexp2, structure.structure[token].regex_part);
+        console.log(structure.structure[token].description+": "+thisPart);
+      }
+    }else{
+      console.log(structure.structure[token].description+
+        getScrapped(cadena, structure.structure[token].regex, structure.structure[token].regex_part));
+    }
   }
 }
 
-function getScrapped(cadena, re, cual){
-  if(cual==undefined) cual=1;
+function getScrapped(fullString, re, partToKeep){
+  if(partToKeep==undefined) partToKeep=1;
   var rePattern = new RegExp(re);
-  var resultados = cadena.match(rePattern);
-  if(!resultados) return null;
-  return resultados[cual];
+  var results = fullString.match(rePattern);
+  if(!results) return null;
+  return results[partToKeep];
 }

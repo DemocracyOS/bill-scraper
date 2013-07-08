@@ -1,0 +1,33 @@
+{
+ "structure": [
+    {
+      "name" : "sancion",
+      "description" : "Sancion",
+      "regex" : ".*Sanci&oacute;n: (\\d{1,2}\\\/\\d{1,2}\\\/\\d{4})(.*)",
+      "regex_part" : "1",
+      "array" : "false"
+    },
+    {
+      "name" : "publicacion",
+      "description" : "Publicacion",
+      "regex" : ".*Publicaci&oacute;n: (.*)<(.*)",
+      "regex_part" : "1",
+      "array" : "false"
+    },
+    {
+      "name" : "promulgacion",
+      "description" : "Promulgacion",
+      "regex" : ".*Promulgaci&oacute;n: (.*)<(.*)",
+      "regex_part" : "1",
+      "array" : "false"
+    },
+    {
+      "name" : "articulos",
+      "description" : "Articulos",
+      "regex" : ".*Art&iacute;culo \\d{1,2}(.*)-(.*)",
+      "internal_regex" : ".*Art&iacute;culo(.*)-(.*)",
+      "regex_part" : "2",
+      "array" : "true"
+    }
+  ]
+}
