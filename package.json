@@ -17,7 +17,8 @@
     "url": ""
   },
   "dependencies": {
-    "optimist": "*"
+    "optimist": "*",
+    "mongoose": "*"
   },
   "devDependencies": {},
   "main": "pdr",
