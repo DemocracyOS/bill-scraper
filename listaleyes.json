@@ -1,0 +1,15 @@
+{
+ "structure": [
+    {
+      "name" : "ley",
+      "dbField" : "url",
+      "dbFieldType" : "String",
+      "description" : "Promulgacion",
+      "regex" : ".*(ley\\d{1,3}\\.html).*",
+      "regex_part" : "1",
+      "fixed_pre_string" : "http://www.cedom.gov.ar/es/legislacion/normas/leyes/",
+      "array" : "false"
+    }
+  ],
+  "many" : "true"
+}

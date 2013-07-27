@@ -1,6 +1,7 @@
 var http = require("http");
 var util = require("util");
 var fs = require('fs')
+var Entity; 
 var argv = require('optimist')
     .usage(
         'Usage1: $0 -t json_structure -h hostname [-p path] [-s start_index] [-e end_index]\n'+
@@ -13,41 +14,38 @@ var argv = require('optimist')
     .demand(['b'])
     .describe('t', 'Json file with the structure to parse (ie.: ./config.json)')
     .describe('d', 'Database name (ie.: scrapper)')
-    .describe('b', 'DB Schema to use (ie.: laws)')
+    .describe('b', 'DB Schema to write to (ie.: laws)')
     .describe('h', 'Hostname to connect to (ie.: www.google.com)')
     .describe('p', 'Path in the host, include "#1" to replace for an index (ie.: /docs/law#1.html)')
     .describe('s', 'Starting index for auto generated urls (ie.: 200)')
     .describe('e', 'End index for auto generated urls (ie.: 210)')
+    .describe('o', 'DB Schema to read links from (ie: links)')
+    .describe('a', 'DB attribute to read links from (ie: url)')
     .argv;
 var structure = undefined;
 var mongoose = undefined;
 var db= undefined;
 
 main();
-//connectToDB();
 
-function saveEntity(schemaLocal, dataToSave){
-  if(db){
-    writeEntity(schemaLocal, dataToSave);
-  }else{
-    connectToDB(schemaLocal, dataToSave);
-  }
-}
-
-function connectToDB(schemaLocal, dataToSave){
+function connectToDB(schema){
   mongoose = require('mongoose');
   mongoose.connect('mongodb://localhost/'+argv.d);
+  createEntity(schema);
   db = mongoose.connection;
   db.on('error', console.error.bind(console, 'connection error:'));
   db.once('open', function() {
-    return writeEntity(schemaLocal, dataToSave);
+    processLinks(argv.s);
   });
 }
 
-function writeEntity(schemaLocal, dataToSave){
+function createEntity(schemaLocal){
   var entityTemp=JSON.parse(schemaLocal);
   var entitySchema = mongoose.Schema(entityTemp);
-  var Entity = mongoose.model('Entities', entitySchema);
+  Entity = mongoose.model(argv.b, entitySchema);
+}
+
+function writeEntity(dataToSave){
 console.log(dataToSave);
   var entityInstance = new Entity(JSON.parse(dataToSave));
   entityInstance.save(function(){console.log('saved')});
@@ -61,7 +59,7 @@ function main(){
   checkParams();
   structure = readStructure();
   var schema = createDBSchema(structure);
-  processLinks(argv.s, schema);
+  connectToDB(schema);
 }
 
 function checkParams(){
@@ -94,7 +92,7 @@ function readStructure(){
   return require(argv.t);
 }
 
-function processLinks(lastUsedIndex, schema){
+function processLinks(lastUsedIndex){
   if(lastUsedIndex>argv.e){
     return;
   }else{
@@ -102,11 +100,11 @@ function processLinks(lastUsedIndex, schema){
     var thisLink=argv.h+newPathname;
     console.log("processing: "+thisLink);
     lastUsedIndex++;
-    traerPag(argv.h, newPathname, lastUsedIndex, schema);
+    traerPag(argv.h, newPathname, lastUsedIndex);
   }
 }
 
-function traerPag(host, path, lastUsedIndex, schema){
+function traerPag(host, path, lastUsedIndex){
   var options = {
     host: host,
     port: 80,
@@ -115,13 +113,13 @@ function traerPag(host, path, lastUsedIndex, schema){
   
   var content="";
   http.get(options, function(res) {
-    return manageHttpResponse(res, lastUsedIndex, content, schema);
+    return manageHttpResponse(res, lastUsedIndex, content);
   }).on('error', function(e) {
     console.log("Got error: " + e.message);
   });
 }
 
-function manageHttpResponse(res,  lastUsedIndex, content, schema){
+function manageHttpResponse(res,  lastUsedIndex, content){
   res.setEncoding("utf8");
   res.on("data", function (chunk) {
       content += chunk;
@@ -129,8 +127,14 @@ function manageHttpResponse(res,  lastUsedIndex, content, schema){
   res.on("end", function (sss) {
     if(res.statusCode==200){
       var localContent=getJsonFromString(content);
-      saveEntity(schema, localContent);
-      processLinks(lastUsedIndex, schema);
+      if(localContent instanceof Array){
+        for(var cont in localContent){ 
+          writeEntity(localContent[cont]);
+        }
+      }else{
+        writeEntity(localContent);
+      }
+      processLinks(lastUsedIndex);
     }else{
       console.log("Page not found");
     }
@@ -138,7 +142,8 @@ function manageHttpResponse(res,  lastUsedIndex, content, schema){
 }
 
 function getJsonFromString(cadena){
-  var retVal="{";
+  var retVal="";
+  retVal+="{";
   var firstToken=true;
   for(token in structure.structure){
     if(firstToken){
@@ -146,7 +151,17 @@ function getJsonFromString(cadena){
     }else{
       retVal+=", ";
     }
-    if(structure.structure[token].array=="true"){
+    if(structure.many){
+      var arrayRetVal=new Array();
+      var regexp1 = new RegExp(structure.structure[token].regex, "g");
+      var paragraph = cadena.match(regexp1);
+      var regexp2 = new RegExp(structure.structure[token].regex);
+      for(parag in paragraph){
+        var thisPart= getScrapped(paragraph[parag], regexp2, structure.structure[token].regex_part);
+        var thisFullPart=(structure.structure[token].fixed_pre_string?structure.structure[token].fixed_pre_string:'')+sanitizeString(thisPart)
+        arrayRetVal.push('{"'+structure.structure[token].dbField+'": "'+thisFullPart+'"}');
+      }
+    }else if(structure.structure[token].array=="true"){
       var regexp1 = new RegExp(structure.structure[token].regex, "g");
       var paragraph = cadena.match(regexp1);
       var regexp2 = new RegExp(structure.structure[token].internal_regex);
@@ -159,17 +174,17 @@ function getJsonFromString(cadena){
           retVal+=", ";
         }
         var thisPart= getScrapped(paragraph[parag], regexp2, structure.structure[token].regex_part);
-        retVal+='{"'+structure.structure[token].internal_dbField+'": "'+sanitizeString(thisPart)+'"}';
+        var thisFullPart=(structure.structure[token].fixed_pre_string?structure.structure[token].fixed_pre_string:'')+sanitizeString(thisPart)
+        retVal+='{"'+structure.structure[token].internal_dbField+'": "'+thisFullPart+'"}';
       }
       retVal+="]";
     }else{
-      retVal+='"'+structure.structure[token].dbField+'": "'+
-          sanitizeString(getScrapped(cadena, structure.structure[token].regex, structure.structure[token].regex_part))+
-          '"';
+      var thisFullPart=(structure.structure[token].fixed_pre_string?structure.structure[token].fixed_pre_string:'')+sanitizeString(getScrapped(cadena, structure.structure[token].regex, structure.structure[token].regex_part));
+      retVal+='"'+structure.structure[token].dbField+'": "'+thisFullPart+'"';
     }
   }
   retVal+="}";
-  return retVal;
+  return structure?arrayRetVal:retVal;
 }
 
 function getScrapped(fullString, re, partToKeep){
