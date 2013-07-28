@@ -17,6 +17,7 @@
     "url": ""
   },
   "dependencies": {
+    "request": "*",
     "optimist": "*",
     "mongoose": "*"
   },
