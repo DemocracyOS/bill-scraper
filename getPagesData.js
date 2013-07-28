@@ -25,6 +25,7 @@ var argv = require('optimist')
 var structure = undefined;
 var mongoose = undefined;
 var db= undefined;
+var linkList;
 
 main();
 
@@ -46,7 +47,6 @@ function createEntity(schemaLocal){
 }
 
 function writeEntity(dataToSave){
-console.log(dataToSave);
   var entityInstance = new Entity(JSON.parse(dataToSave));
   entityInstance.save(function(){console.log('saved')});
 }
@@ -93,14 +93,37 @@ function readStructure(){
 }
 
 function processLinks(lastUsedIndex){
-  if(lastUsedIndex>argv.e){
-    return;
+  if(argv.p){
+    if(lastUsedIndex>argv.e){
+      return;
+    }else{
+      var newPathname=argv.p.replace("\#1", lastUsedIndex);
+      var thisLink=argv.h+newPathname;
+      console.log("processing: "+thisLink);
+      lastUsedIndex++;
+      traerPag(argv.h, newPathname, lastUsedIndex);
+    }
   }else{
-    var newPathname=argv.p.replace("\#1", lastUsedIndex);
-    var thisLink=argv.h+newPathname;
-    console.log("processing: "+thisLink);
-    lastUsedIndex++;
-    traerPag(argv.h, newPathname, lastUsedIndex);
+    if(linkList){
+      traerPag(argv.h, linkList[lastUsedIndex], lastUsedIndex);
+    }else{
+      readLinksFromDB();
+    }
+  }
+}
+
+function createiInputEntity(){
+  var schemaLocal='{"'+argv.a+'"}';
+  var entityTemp=JSON.parse(schemaLocal);
+  var entitySchema = mongoose.Schema(entityTemp);
+  inputEntity = mongoose.model(argv.o, entitySchema);
+}
+
+function readLinksFromDB(){
+  var originCollection=mongoose.db(argv.a);
+  var linkList=originCollection.find();
+  for(linkI in linkList){
+    console.log(linkList[linkI]);
   }
 }
 
