@@ -31,7 +31,7 @@
       "name" : "articulos",
       "dbField" : "articulos",
       "internal_dbField" : "articulo",
-      "dbFieldType" : "String",
+      "dbFieldType" : { "articulo" : "String"},
       "description" : "Articulos",
       "regex" : ".*Art&iacute;culo \\d{1,2}(.*)-(.*)",
       "internal_regex" : ".*Art&iacute;culo(.*)-(.*)",

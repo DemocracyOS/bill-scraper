@@ -48,10 +48,10 @@ function createDBSchema(sourceStructure){
     }
     if(sourceStructure.structure[token].array=="true"){
       jsonSchema+='"'+sourceStructure.structure[token].dbField+'"'+":";
-      jsonSchema+="["+'"'+sourceStructure.structure[token].dbFieldType+'"'+"]";
+      jsonSchema+="["+''+JSON.stringify(sourceStructure.structure[token].dbFieldType)+''+"]";
     }else{
       jsonSchema+='"'+sourceStructure.structure[token].dbField+'"'+":";
-      jsonSchema+='"'+sourceStructure.structure[token].dbFieldType+'"';
+      jsonSchema+=''+JSON.stringify(sourceStructure.structure[token].dbFieldType)+'';
     }
   }
   jsonSchema+="}";
