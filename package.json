@@ -1,10 +1,9 @@
 {
   "name": "cedom-scrapper",
   "version": "0.0.1",
-  "description": "A customized scrapper associated with Partido de la Red",
+  "description": "A scraper of CEDOM data for DemocracyOS",
   "homepage": "",
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "Partido De La Red <ultraklon@partidodelared.org>",
   "contributors": [
     {
