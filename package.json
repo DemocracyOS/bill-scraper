@@ -16,7 +16,7 @@
     "url": ""
   },
   "dependencies": {
-    "request": "*",
+    "request": "~2.25.0",
     "optimist": "*",
     "mongoose": "*"
   },

@@ -4,7 +4,7 @@ cedom-scraper
 Modules
 -------
 
-### cedom-interfase
+### cedom-cli
 
 Is the control module. Interacts with `cedom` to access CEDOM information and with the `db-manager` to read and write data to the database.
 
@@ -31,6 +31,18 @@ Coding convention
 
 - Use 2-spaces instead of tabs.
 - Use double quotes for string.
+
+Definitions
+===========
+
+- A bill is a proposed law.
+- An act is a bill that has been enacted into law.
+
+Links
+=====
+
+https://en.wikipedia.org/wiki/Bill_(law)
+
 
 License
 =======

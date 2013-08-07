@@ -1,0 +1,20 @@
+// Act schema
+{
+  "meta": {
+    "number": "Number",       // número
+    "title": "String",        // título
+    "ratification": "String", // fecha sanción
+    "promulgation": {         // promulgación
+      "date": "Date",         // fecha
+      "ref": "String"         // referencia (decreto, etc.)
+    },
+    "publication": {          // publicación
+      "date": "Date",         // fecha
+      "ref": "String"         // referencia (decreto, etc.)
+    },
+    "signatures": [{          // firmas
+      "signature": "String"   // firma
+    }]
+  },
+  "body": "String"            // cuerpo (capítulos, títulos, artículos, etc.)
+}
