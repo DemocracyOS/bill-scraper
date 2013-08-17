@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "A customized scrapper associated with Partido de la Red",
   "homepage": "",
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "Partido De La Red <ultraklon@partidodelared.org>",
   "contributors": [
     {
@@ -17,9 +16,10 @@
     "url": ""
   },
   "dependencies": {
-    "request": "*",
     "optimist": "*",
-    "mongoose": "*"
+    "ent": "*",
+    "mongoose": "*",
+    "iconv": "~2.0.6"
   },
   "devDependencies": {},
   "main": "pdr",
