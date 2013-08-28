@@ -51,7 +51,7 @@ function getJsonFromString(cadena, structure){
   if(structure.many){
     return JSON.parse("[" + arrayRetVal + "]");
   }else{
-  	try{
+    try{
       return JSON.parse(retVal);
     }catch(e){
       console.log("Error parsing: " + e);
@@ -70,5 +70,7 @@ function getScrapped(fullString, re, partToKeep){
 }
 
 function sanitizeString(str){
-  return str==null?null:str.replace('"', '');
+// aca hay quilombos con el caracter de mierda de  la ley 406
+  return str==null?null:str.replace(/–/g, '-').replace(/\"/g, '');
+  //return str==null?null:str.replace(/\"/g, '').replace(/\//g, '').replace(/>/g, '').replace(/</g, '').replace(/=/g, '').replace(/\)/g, '').replace(/\(/g, '').substring(0,600);
 }

@@ -8,9 +8,7 @@ var request = require('request'),
 
 var dbConnection=connectToDB("cedom1", function(db){
   //initial("http://www.cedom.gov.ar/es/legislacion/normas/leyes/ley4576.html", "./leycedom.json");
-  initial("www.cedom.gov.ar", "/es/legislacion/normas/leyes/index.php?pagina=9", "./listaleyes.json", function(leyes){ listCallback(leyes, db)});
-  //initial("www.cedom.gov.ari", "/es/legislacion/normas/leyes/index.php?pagina=9", "./listaleyes.json", function(leyes){ listCallback(leyes, db)});
-  //initial("http://www.cedom.gov.ar/es/legislacion/normas/leyes/index.php?pagina=9", "./listaleyes.json", function(leyes){ listCallback(leyes, db)});
+  initial("www.cedom.gov.ar", "/es/legislacion/normas/leyes/index.php?pagina=9", "./listaleyes.json", function(leyes){ listCallback(leyes, db, 0)});
 });
 
 function initial(url, path, regexConfigFilename, outputCallBack){
@@ -22,8 +20,9 @@ function initial(url, path, regexConfigFilename, outputCallBack){
   });  
 }
 
-function listCallback(leyes, dbConnection){
+/*function listCallback(leyes, dbConnection){
   for(ley in leyes){
+    console.log("ttt: " + typeof(ley));
     var url1=leyes[ley].url.split('\/')[2];
     var path1="";
     var i=3;
@@ -32,10 +31,53 @@ function listCallback(leyes, dbConnection){
       i++;
     }
     try{
-      initial(url1, path1, "./leycedom.json", function(data){writerCallback(data, dbConnection)});
+      var extradataA = new Object();
+      extradataA.art_no=/([0-9]{1,4}).* /.exec(path1)[1];
+      console.log("path1: " + path1);
+      console.log("arti: " + extradataA.art_no);
+      initial(url1, path1, "./leycedom.json", function(data){writerCallback(data, extradataA, dbConnection)});
     }catch(e){
       console.log("Error parsing "+leyes[ley].url);
     }
+  }
+}
+
+function writerCallback(writeEntity, extradata, dbConnection){
+  if(writeEntity){
+    writeEntity.art_no=extradata.art_no;
+    var entityInstance = new Entity(writeEntity);
+    console.log('saving: '+ writeEntity.art_no );
+    entityInstance.save(function(){console.log('saved: '+ writeEntity.art_no )});
+  }
+}
+*/
+function listCallback(leyes, dbConnection, index){
+  if(!leyes[index]) return;
+  var url1=leyes[index].url.split('\/')[2];
+  var path1="";
+  var i=3;
+  while(leyes[index].url.split('\/')[i]){
+    path1+="/"+leyes[index].url.split('\/')[i];
+    i++;
+  }
+  try{
+    var extradataA = new Object();
+    extradataA.art_no=/([0-9]{1,4}).*/.exec(path1)[1];
+    console.log("path1: " + path1);
+    console.log("arti: " + extradataA.art_no);
+    initial(url1, path1, "./leycedom.json", function(data){writerCallback(data, extradataA, dbConnection, leyes, index)});
+  }catch(e){
+    console.log("Error parsing "+leyes[index].url+" e: "+e.message);
+  }
+}
+
+function writerCallback(writeEntity, extradata, dbConnection, leyes, index){
+  if(writeEntity){
+    writeEntity.art_no=extradata.art_no;
+    var entityInstance = new Entity(writeEntity);
+    console.log('saving: '+ writeEntity.art_no );
+    entityInstance.save(function(){console.log('saved: '+ writeEntity.art_no )});
+    listCallback(leyes, dbConnection, index+1);
   }
 }
 
@@ -66,6 +108,9 @@ function createDBSchema(sourceStructure){
       jsonSchema+=''+JSON.stringify(sourceStructure.structure[token].dbFieldType)+'';
     }
   }
+  //ToDo: this was a dirty fix, make this readable from the schema file (leycedom.json)
+  jsonSchema+=',"art_no":';
+  jsonSchema+='"String"';
   jsonSchema+="}";
   return jsonSchema;
 }
@@ -74,13 +119,6 @@ function createEntity(schemaLocal){
   var entityTemp=JSON.parse(schemaLocal);
   var entitySchema = mongoose.Schema(entityTemp);
   Entity = mongoose.model("entities", entitySchema);
-}
-
-function writerCallback(writeEntity, dbConnection){
-  if(writeEntity){
-    var entityInstance = new Entity(writeEntity);
-    entityInstance.save(function(){console.log('saved')});
-  }
 }
 
 function traerPag(host, path, callback){
@@ -92,7 +130,8 @@ function traerPag(host, path, callback){
 
   var request = http.get(options, function(res){
     var body="";
-    res.setEncoding('ascii');
+    //res.setEncoding('ascii');
+    res.setEncoding('utf8');
     res.on('end', function(){
       callback(body);
     });
