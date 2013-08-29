@@ -130,8 +130,8 @@ function traerPag(host, path, callback){
 
   var request = http.get(options, function(res){
     var body="";
-    //res.setEncoding('ascii');
-    res.setEncoding('utf8');
+    res.setEncoding('ascii');
+    //res.setEncoding('utf8');
     res.on('end', function(){
       callback(body);
     });

@@ -33,8 +33,8 @@
       "internal_dbField" : "articulo",
       "dbFieldType" : { "articulo" : "String"},
       "description" : "Articulos",
-      "regex" : ".*Art&iacute;culo \\d{1,2}(.*)-(.*)",
-      "internal_regex" : ".*Art&iacute;culo(.*)-(.*)",
+      "regex" : ".*Art&iacute;culo \\d{1,2}(.*)-([\\s\\S]*?)(?=ALIGN|Art&iacute;culo)",
+      "internal_regex" : ".*Art&iacute;culo(.*)-([\\s\\S]*)",
       "regex_part" : "2",
       "array" : "true"
     }
