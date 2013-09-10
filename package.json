@@ -16,10 +16,7 @@
     "url": ""
   },
   "dependencies": {
-    "optimist": "*",
-    "ent": "*",
-    "mongoose": "*",
-    "iconv": "~2.0.6"
+    "noodle": "*"
   },
   "devDependencies": {},
   "main": "pdr",
