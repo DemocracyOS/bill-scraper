@@ -1,6 +1,6 @@
-var  noodle = require('noodle'),
-    http = require('http'),
-    util = require('util');
+var noodlejs = require('noodlejs'),
+    noodle = require('noodle'),
+    http = require('http');
 
 console.log("----------------------------");
 console.log("Plain Noodle");
@@ -9,9 +9,16 @@ console.log(noodle);
 console.log();
 console.log();
 console.log("----------------------------");
+console.log("----------------------------");
+console.log("Plain NoodleJS");
+console.log("----------------------------");
+console.log(noodlejs);
+console.log();
+console.log();
+console.log("----------------------------");
 console.log("Noodle with inspect");
 console.log("----------------------------");
-console.log(util.inspect(noodle));
+console.log(util.inspect(noodlejs));
 console.log();
 console.log();
 console.log("----------------------------");

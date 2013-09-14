@@ -16,7 +16,7 @@
     "url": ""
   },
   "dependencies": {
-    "noodle": "*"
+    "noodlejs": "*"
   },
   "devDependencies": {},
   "main": "pdr",
