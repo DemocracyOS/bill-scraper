@@ -11,6 +11,8 @@ function main(){
 function processPage(browser){
   var paragraphs=browser.querySelectorAll("p");
   var articles=new Array();
+  var comision='';
+  var expediente='';
   for(parag in paragraphs){
     var thisParag=sanitizeText(paragraphs[parag].innerHTML);
     //if this is an empty paragraph, ignore it
@@ -18,7 +20,13 @@ function processPage(browser){
       continue;
     }
     if(thisParag.substr(0,15)=="Sala de la Comi"){ //this text tell us there are no more articles
-      break
+      break;
+    }else if(thisParag.substr(0,15)=="El Expediente N"){
+      expediente=thisParag.substr(17,100);
+      expediente=expediente.substr(0, expediente.search(' de autor'));
+    }else if(thisParag.substr(0,15)=="Por lo expuesto"){
+      comision=thisParag.substr(34,100);
+      comision=comision.substr(0, comision.search(' aconseja'));
     }else if(thisParag.substr(0,3)=="Art"){ //if an Article is starting
       articles.push(thisParag);
     }else{
@@ -28,11 +36,13 @@ function processPage(browser){
       }
     } 
   }
-  showArticles(articles);
+  showArticles(expediente, comision, articles);
 }
 
 //shows articles, just for debugging purposes
-function showArticles(articles){
+function showArticles(expediente, comision, articles){
+  console.log("----Expediente: "+expediente+"----------------");
+  console.log("----Comision: "+comision+"----------------");
   for(a in articles){
     console.log("--------------------");
     console.log("--------------------");
@@ -47,6 +57,7 @@ function sanitizeText(str){
   if(!str) return str;
   str=str.replace(/<\/?[^>]+(>|$)/g, "");
   str=str.replace(/(\n|\r)/g, " ");
+  str=str.trim();
   return str;
 }
 
