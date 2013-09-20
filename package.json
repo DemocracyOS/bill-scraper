@@ -16,6 +16,7 @@
     "url": ""
   },
   "dependencies": {
+    "mongoose": "*",
     "zombie": "*"
   },
   "devDependencies": {},
