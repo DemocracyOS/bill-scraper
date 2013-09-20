@@ -1,20 +1,37 @@
-var Browser = require("zombie"),
-  mongoose = require('mongoose');
+/**
+ * Module dependencies.
+ */
 
-function main(){
-  var browser = new Browser({ debug: true })
-  browser.runScripts = false
-  browser.visit("file:///Users/pnmoyano/Downloads/despacho.html", function(){
-    processPage(browser);
-  });
-}
+var db = require('./db')('cedom');
+var Entity = db.model('Entity');
 
-function processPage(browser){
-  var paragraphs=browser.querySelectorAll("p");
-  var articles=new Array();
-  var comision='';
-  var expediente='';
-  for(parag in paragraphs){
+var connection = db.connection;
+connection.on('error', console.error.bind(console, 'connection error:'));
+
+var Browser = require("zombie");
+var visitOptions = { runScripts: false, loadCSS: false, debug: true, silent: true };
+Browser.visit("file:///Users/pnmoyano/Downloads/despacho.html", visitOptions, ready);
+
+/**
+ * Callback for browser `ready` state
+ *
+ * @requires `sanitizeText` function globally defined
+ * @requires `saveAll` function globally defined
+ * @api private
+ */
+
+function ready(err, browser) {
+  if (err) {
+    console.log('Found error: %s', err);
+    return process.exit(1);
+  };
+
+  var paragraphs = browser.querySelectorAll("p");
+  var articles = [];
+  var comision = '';
+  var expediente = '';
+
+  for(parag in paragraphs) {
     var thisParag=sanitizeText(paragraphs[parag].innerHTML);
     //if this is an empty paragraph, ignore it
     if(!thisParag || thisParag.trim()==""){
@@ -35,43 +52,61 @@ function processPage(browser){
       if(articles.length>0){
         articles[articles.length-1]=articles[articles.length-1]+"\n"+thisParag;
       }
-    } 
-  }
+    }
+  };
   //showArticles(expediente, comision, articles);
   saveAll(expediente, comision, articles);
 }
 
-function saveAll(expediente, comision, articles){
-  connectToDB("cedom2", expediente, comision, articles, function(db, expediente, comision, articles){
+/**
+ * Persist parsed document to database
+ *
+ * @param {String} expediente
+ * @param {String} comision
+ * @param {Array} articles
+ * @requires `connection` MongoDB connection globally defined
+ * @requires `Entity` Mongoose model globally defined
+ * @requires `showArticles` function globally defined
+ * @api private
+ */
+
+function saveAll(expediente, comision, articles) {
+  connection.once('open', function() {
     showArticles(expediente, comision, articles);
-    /*var obj=new Object();
-    obj['expediente']=expediente;
-    obj['comision']=comision;
-    obj['articles']=articles;
-    writerCallback(obj, db);*/
+
+    // Creating an `Entity` instance
+    var entity = new Entity({
+      expediente: expediente,
+      comision: comision,
+      articles: articles
+    });
+
+    // log
+    console.log('saving:', entity.expediente);
+
+    // Saving entity instance
+    entity.save(function(err) {
+      if (err) {
+        console.log('found error: %j', err);
+      } else {
+        console.log('saved: %s', entity.expediente);
+      }
+    })
   });
 }
 
-function writerCallback(writeEntity, dbConnection){
-  if(writeEntity){
-    var entityInstance = new Entity(writeEntity);
-    console.log('saving: '+ writeEntity.expediente );
-    entityInstance.save(function(){console.log('saved: '+ writeEntity.expediente )});
-  }
-}
+/**
+ * Prints articles, just for debugging purposes
+ *
+ * @param {String} expediente
+ * @param {String} comision
+ * @param {Array} articles
+ * @api private
+ */
 
-function createEntity(){
-  var schemaLocal='{ "expediente" : "String", "comision" : "String", "articles" : ["String"] }';
-  var entityTemp=JSON.parse(schemaLocal);
-  var entitySchema = mongoose.Schema(entityTemp);
-  Entity = mongoose.model("entities", entitySchema);
-}
-
-
-//shows articles, just for debugging purposes
 function showArticles(expediente, comision, articles){
-  console.log("----Expediente: "+expediente+"----------------");
-  console.log("----Comision: "+comision+"----------------");
+  console.log("----Expediente: " + expediente + "----------------");
+  console.log("----Comision: " + comision + "----------------");
   for(a in articles){
     console.log("--------------------");
     console.log("--------------------");
@@ -81,16 +116,14 @@ function showArticles(expediente, comision, articles){
   }
 }
 
-function connectToDB(dbName, expediente, comision, articles, callback){
-  mongoose.connect('mongodb://localhost/'+dbName);
-  createEntity();
-  var db = mongoose.connection;
-  db.on('error', console.error.bind(console, 'connection error:'));
-  //db.once('open', callback(db, expediente, comision, articles));
-  db.once('open', function(db, expediente, comision, articles){callback(db, expediente, comision, articles)});
-}
+/**
+ * Remove html from text and replaces new lines with a blank space
+ *
+ * @param {String} str
+ * @return {String} sanitized string
+ * @api private
+ */
 
-//removes html from text and replaces new lines with a blank space 
 function sanitizeText(str){
   if(!str) return str;
   str=str.replace(/<\/?[^>]+(>|$)/g, "");
@@ -98,5 +131,3 @@ function sanitizeText(str){
   str=str.trim();
   return str;
 }
-
-main();
