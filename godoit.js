@@ -10,7 +10,8 @@ connection.on('error', console.error.bind(console, 'connection error:'));
 
 var Browser = require("zombie");
 var visitOptions = { runScripts: false, loadCSS: false, debug: true, silent: true };
-Browser.visit("file:///Users/pnmoyano/Downloads/despacho.html", visitOptions, ready);
+var docUrl = "file://" + process.argv[2];
+Browser.visit(docUrl, visitOptions, ready);
 
 /**
  * Callback for browser `ready` state
@@ -30,6 +31,22 @@ function ready(err, browser) {
   var articles = [];
   var comision = '';
   var expediente = '';
+  // Sample phrases mentioning expediente number
+  // - El Expediente Nº 2059-D-2012 y agreg. 2882-J-2012 de autoría de los Diputados Enzo Pagani, Lidia Saya, María Karina Spalla y del Sr. Jefe de Gobierno
+  // - El Expediente Nº 1222-O-2012, de autoría de 
+  // - El expedinete N° 099-D-2012 del Diputado Ocampo Martin y otros de Ley, donde se solicita la Obligatoriedad de informar en forma previa en los cajeros automáticos el costo de 
+  // - El expediente N° 0305-D-2012, de Declaración, de la Diputada Morales Gorleri, referido a la preocupación 
+  // - El Expediente Nº 147-D-2012, de Declaración, de autoría de los Diputados Claudio Presman
+  // - El Expediente Nº  180-D-2012 Proyecto de Resolución de los diputados Rubén Campos y Claudio Presman  y
+  // - El expediente 674-D-2012 de autoría del Diputado Adrián R. 
+  // - El expediente N° 0296-D-2011 del Diputado Ocampo y otros de Ley
+  // - El Expediente Nº 1964-D-2011 iniciado por la Diputada Carmen Polledo quien propicia declarar Ciudadano Ilustre al actor, di
+  // - El Expediente 1286-D-2012 de ley, de autoría de los Diputados Presman, Claudio y Campos, Rubén
+  // - Que el Expediente, 005-D-12, de autoría de la Diputada Maria Elena Naddeo, proyecto de declaración por el que exhorta q
+  // - El Expte. N° 389-D-2012, propiciado por los Sres. Diputados Claudio Presman y Rubén Campos por medio del cual solicitan gestiones ante la 
+  // - El Expediente 2112-D-2012 de ley, de autoría del Diputado
+  var expedienteIdentifierRegExp = /^(?:&nbsp;)*(?:que )*el (?:expediente|expte|expedinete).{1,4}([0-9]{3,4}\-.\-[0-9]{2,4})(?: |,)/i;  
+
 
   for(parag in paragraphs) {
     var thisParag=sanitizeText(paragraphs[parag].innerHTML);
@@ -39,9 +56,8 @@ function ready(err, browser) {
     }
     if(thisParag.substr(0,15)=="Sala de la Comi"){ //this text tell us there are no more articles
       break;
-    }else if(thisParag.substr(0,15)=="El Expediente N"){
-      expediente=thisParag.substr(17,100);
-      expediente=expediente.substr(0, expediente.search(' de autor'));
+    }else if(expedienteIdentifierRegExp.test(thisParag)){
+      expediente = expedienteIdentifierRegExp.exec(thisParag)[1];
     }else if(thisParag.substr(0,15)=="Por lo expuesto"){
       comision=thisParag.substr(34,100);
       comision=comision.substr(0, comision.search(' aconseja'));
